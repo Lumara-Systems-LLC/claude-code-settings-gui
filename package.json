@@ -6,11 +6,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/DailyDisco/claude-code-settings-gui"
+    "url": "https://github.com/Lumara-Systems-LLC/claude-code-settings-gui"
   },
-  "homepage": "https://github.com/DailyDisco/claude-code-settings-gui#readme",
+  "homepage": "https://github.com/Lumara-Systems-LLC/claude-code-settings-gui#readme",
   "bugs": {
-    "url": "https://github.com/DailyDisco/claude-code-settings-gui/issues"
+    "url": "https://github.com/Lumara-Systems-LLC/claude-code-settings-gui/issues"
   },
   "keywords": [
     "claude",
