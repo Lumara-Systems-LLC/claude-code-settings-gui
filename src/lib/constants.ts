@@ -50,6 +50,7 @@ export const NAV_ITEMS = [
   {
     title: "System",
     items: [
+      { title: "MCP Servers", href: "/mcp-servers", icon: "Server" },
       { title: "Storage", href: "/storage", icon: "HardDrive" },
       { title: "Projects", href: "/projects", icon: "FolderOpen" },
       { title: "Git", href: "/git", icon: "GitBranch" },

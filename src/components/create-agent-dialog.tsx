@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import {
   Dialog,
   DialogContent,
@@ -111,7 +113,18 @@ Add specific instructions for this agent.
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="name">Name</Label>
+                <InfoTip
+                  content={
+                    <div>
+                      <p>{helpContent.creation.agent.name.description}</p>
+                      <p className="mt-1 text-xs">Example: {helpContent.creation.agent.name.example}</p>
+                    </div>
+                  }
+                  side="right"
+                />
+              </div>
               <Input
                 id="name"
                 value={name}
@@ -135,7 +148,13 @@ Add specific instructions for this agent.
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="model">Model</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="model">Model</Label>
+                <InfoTip
+                  content={helpContent.creation.agent.model.description}
+                  side="right"
+                />
+              </div>
               <Select value={model} onValueChange={setModel}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select model" />

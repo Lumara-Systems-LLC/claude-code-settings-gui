@@ -1,14 +1,38 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile, writeFile, deleteFile, validatePath } from "@/lib/file-utils";
 import { IS_DEMO_MODE, DEMO_CLAUDE_MD } from "@/lib/demo-data";
+import { homedir } from "os";
+import { join } from "path";
+
+// Resolve a path - handles both absolute paths and relative paths from ~/.claude
+function resolvePath(path: string): string {
+  // If path starts with home directory or is absolute, use as-is
+  if (path.startsWith("/") || path.startsWith(homedir())) {
+    return path;
+  }
+  // Otherwise, treat as relative to ~/.claude
+  return join(homedir(), ".claude", path);
+}
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
-  const path = searchParams.get("path");
+  let path = searchParams.get("path");
+  const file = searchParams.get("file"); // New: accept file name directly
+
+  // Support both ?path=... and ?file=... (file is relative to ~/.claude)
+  if (file) {
+    path = join(homedir(), ".claude", file);
+  }
 
   if (!path) {
-    return NextResponse.json({ error: "Path is required" }, { status: 400 });
+    return NextResponse.json({ error: "Path or file is required" }, { status: 400 });
   }
+
+  // Resolve path (handles "undefined/..." from client-side process.env.HOME bug)
+  if (path.startsWith("undefined/")) {
+    path = path.replace("undefined/", homedir() + "/");
+  }
+  path = resolvePath(path);
 
   // Demo mode - return demo content for known files
   if (IS_DEMO_MODE) {
@@ -50,7 +74,12 @@ export async function PUT(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { path, content, createBackup = true } = body;
+    let { path, file, content, createBackup = true } = body;
+
+    // Support both path and file (file is relative to ~/.claude)
+    if (file && !path) {
+      path = join(homedir(), ".claude", file);
+    }
 
     if (!path || content === undefined) {
       return NextResponse.json(
@@ -58,6 +87,12 @@ export async function PUT(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    // Resolve path (handles "undefined/..." from client-side process.env.HOME bug)
+    if (path.startsWith("undefined/")) {
+      path = path.replace("undefined/", homedir() + "/");
+    }
+    path = resolvePath(path);
 
     if (!validatePath(path)) {
       return NextResponse.json(
@@ -84,11 +119,22 @@ export async function DELETE(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { path, confirmed } = body;
+    let { path, file, confirmed } = body;
+
+    // Support both path and file (file is relative to ~/.claude)
+    if (file && !path) {
+      path = join(homedir(), ".claude", file);
+    }
 
     if (!path) {
       return NextResponse.json({ error: "Path is required" }, { status: 400 });
     }
+
+    // Resolve path (handles "undefined/..." from client-side process.env.HOME bug)
+    if (path.startsWith("undefined/")) {
+      path = path.replace("undefined/", homedir() + "/");
+    }
+    path = resolvePath(path);
 
     if (!confirmed) {
       return NextResponse.json(

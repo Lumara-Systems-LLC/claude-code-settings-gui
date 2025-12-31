@@ -17,11 +17,7 @@ export default function ReadmePage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["readme"],
     queryFn: async () => {
-      const response = await fetch(
-        `/api/files?path=${encodeURIComponent(
-          process.env.HOME + "/.claude/README.md"
-        )}`
-      );
+      const response = await fetch(`/api/files?file=README.md`);
       if (!response.ok) throw new Error("Failed to load file");
       return response.json();
     },
@@ -33,7 +29,7 @@ export default function ReadmePage() {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          path: process.env.HOME + "/.claude/README.md",
+          file: "README.md",
           content: newContent,
         }),
       });

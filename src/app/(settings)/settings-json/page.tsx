@@ -13,6 +13,8 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { AlertCircle, Plus, Trash2, Save, Code } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import type { Settings } from "@/types/settings";
@@ -246,7 +248,24 @@ export default function SettingsJsonPage() {
           <TabsContent value="permissions" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Allow Patterns</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Allow Patterns
+                  <InfoTip
+                    content={
+                      <div className="space-y-2">
+                        <p>{helpContent.settings.allowPatterns.description}</p>
+                        <p className="font-medium">Examples:</p>
+                        <ul className="text-xs space-y-1">
+                          {helpContent.settings.allowPatterns.examples.map((ex, i) => (
+                            <li key={i}>• {ex}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    }
+                    side="right"
+                    maxWidth="320px"
+                  />
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
@@ -284,7 +303,24 @@ export default function SettingsJsonPage() {
 
             <Card>
               <CardHeader>
-                <CardTitle className="text-lg">Deny Patterns</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  Deny Patterns
+                  <InfoTip
+                    content={
+                      <div className="space-y-2">
+                        <p>{helpContent.settings.denyPatterns.description}</p>
+                        <p className="font-medium">Examples:</p>
+                        <ul className="text-xs space-y-1">
+                          {helpContent.settings.denyPatterns.examples.map((ex, i) => (
+                            <li key={i}>• {ex}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    }
+                    side="right"
+                    maxWidth="320px"
+                  />
+                </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex gap-2">
@@ -322,6 +358,24 @@ export default function SettingsJsonPage() {
           </TabsContent>
 
           <TabsContent value="mcp" className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{helpContent.settings.mcpServers.description}</span>
+              <InfoTip
+                content={
+                  <div className="space-y-2">
+                    <p className="font-medium">MCP Server Fields:</p>
+                    <ul className="text-xs space-y-1">
+                      <li>• <strong>Command:</strong> {helpContent.settings.mcpServers.fields.command}</li>
+                      <li>• <strong>Args:</strong> {helpContent.settings.mcpServers.fields.args}</li>
+                      <li>• <strong>URL:</strong> {helpContent.settings.mcpServers.fields.url}</li>
+                      <li>• <strong>Env:</strong> {helpContent.settings.mcpServers.fields.env}</li>
+                    </ul>
+                  </div>
+                }
+                side="bottom"
+                maxWidth="340px"
+              />
+            </div>
             {Object.entries(settings.mcpServers).map(([name, server]) => (
               <Card key={name}>
                 <CardHeader>
@@ -387,6 +441,23 @@ export default function SettingsJsonPage() {
           </TabsContent>
 
           <TabsContent value="hooks" className="space-y-4">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>{helpContent.settings.hooks.description}</span>
+              <InfoTip
+                content={
+                  <div className="space-y-2">
+                    <p className="font-medium">Hook Event Types:</p>
+                    <ul className="text-xs space-y-1">
+                      {Object.entries(helpContent.settings.hooks.eventTypes).map(([event, desc]) => (
+                        <li key={event}>• <strong>{event}:</strong> {desc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                }
+                side="bottom"
+                maxWidth="340px"
+              />
+            </div>
             {Object.entries(settings.hooks).map(([event, matchers]) => (
               <Card key={event}>
                 <CardHeader>

@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import {
   Dialog,
   DialogContent,
@@ -77,7 +79,18 @@ export function CreateSkillDialog() {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Name</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="name">Name</Label>
+                <InfoTip
+                  content={
+                    <div>
+                      <p>{helpContent.creation.skill.name.description}</p>
+                      <p className="mt-1 text-xs">Example: {helpContent.creation.skill.name.example}</p>
+                    </div>
+                  }
+                  side="right"
+                />
+              </div>
               <Input
                 id="name"
                 value={name}
@@ -91,7 +104,13 @@ export function CreateSkillDialog() {
               </p>
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="description">Description</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="description">Description</Label>
+                <InfoTip
+                  content={helpContent.creation.skill.description.description}
+                  side="right"
+                />
+              </div>
               <Input
                 id="description"
                 value={description}

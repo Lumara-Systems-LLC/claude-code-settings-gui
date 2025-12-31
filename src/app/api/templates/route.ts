@@ -127,3 +127,108 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+// Import a built-in template to the appropriate location
+export async function POST(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json(
+      { error: "Cannot import in demo mode" },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { templateId, customName } = body;
+
+    if (!templateId) {
+      return NextResponse.json(
+        { error: "Template ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // Find the template
+    const template = BUILT_IN_TEMPLATES.find((t) => t.id === templateId);
+    if (!template) {
+      return NextResponse.json(
+        { error: "Template not found" },
+        { status: 404 }
+      );
+    }
+
+    const CLAUDE_DIR = join(homedir(), ".claude");
+    let targetPath: string;
+    let targetDir: string;
+    const name = customName || template.filename || template.id;
+
+    // Determine target location based on category
+    switch (template.category) {
+      case "skill":
+        targetDir = join(CLAUDE_DIR, "skills", name);
+        targetPath = join(targetDir, "SKILL.md");
+        break;
+      case "rule":
+        targetDir = join(CLAUDE_DIR, "rules");
+        targetPath = join(targetDir, name.endsWith(".md") ? name : `${name}.md`);
+        break;
+      case "agent":
+        targetDir = join(CLAUDE_DIR, "agents", name);
+        targetPath = join(targetDir, "AGENT.md");
+        break;
+      case "hook":
+        targetDir = join(CLAUDE_DIR, "hooks");
+        targetPath = join(targetDir, name.endsWith(".sh") ? name : `${name}.sh`);
+        break;
+      case "mcp-server":
+      case "permission":
+        // These go into settings.json, return the content for manual merge
+        return NextResponse.json({
+          success: true,
+          type: "settings-merge",
+          content: template.content,
+          message: `Copy this ${template.category} configuration to your settings.json`,
+        });
+      default:
+        return NextResponse.json(
+          { error: "Unknown template category" },
+          { status: 400 }
+        );
+    }
+
+    // Check if target already exists
+    try {
+      await fs.access(targetPath);
+      return NextResponse.json(
+        { error: `${template.category} "${name}" already exists` },
+        { status: 409 }
+      );
+    } catch {
+      // Doesn't exist, proceed
+    }
+
+    // Create directory and file
+    await fs.mkdir(targetDir, { recursive: true });
+
+    // For hooks, make executable
+    if (template.category === "hook") {
+      await fs.writeFile(targetPath, template.content, { mode: 0o755 });
+    } else {
+      await fs.writeFile(targetPath, template.content, "utf-8");
+    }
+
+    return NextResponse.json({
+      success: true,
+      type: "file-created",
+      path: targetPath,
+      name,
+      category: template.category,
+    });
+  } catch (error) {
+    console.error("Failed to import template:", error);
+    return NextResponse.json(
+      { error: "Failed to import template" },
+      { status: 500 }
+    );
+  }
+}

@@ -122,10 +122,13 @@ export default function HooksPage() {
                   return (
                     <TableRow key={hook.name}>
                       <TableCell>
-                        <div className="flex items-center gap-2">
+                        <Link
+                          href={`/hooks/${encodeURIComponent(hook.name)}`}
+                          className="flex items-center gap-2 hover:underline"
+                        >
                           <Webhook className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">{hook.name}</span>
-                        </div>
+                        </Link>
                       </TableCell>
                       <TableCell>{hook.size}</TableCell>
                       <TableCell>

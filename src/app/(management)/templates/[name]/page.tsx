@@ -1,45 +1,62 @@
 "use client";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { MainLayout } from "@/components/layout";
 import { MarkdownEditor } from "@/components/editors";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { AlertCircle, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import Link from "next/link";
 
-export default function ClaudeMdPage() {
+interface Template {
+  name: string;
+  path: string;
+  content: string;
+}
+
+interface PageProps {
+  params: Promise<{ name: string }>;
+}
+
+export default function TemplateDetailPage({ params }: PageProps) {
+  const { name } = use(params);
+  const decodedName = decodeURIComponent(name);
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
   const [hasChanges, setHasChanges] = useState(false);
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["claude-md"],
+  const { data: template, isLoading, error } = useQuery({
+    queryKey: ["template", decodedName],
     queryFn: async () => {
-      const response = await fetch(`/api/files?file=CLAUDE.md`);
-      if (!response.ok) throw new Error("Failed to load file");
-      return response.json();
+      const response = await fetch(
+        `/api/templates?filename=${encodeURIComponent(decodedName)}`
+      );
+      if (!response.ok) throw new Error("Failed to load template");
+      return response.json() as Promise<Template>;
     },
   });
 
   const mutation = useMutation({
     mutationFn: async (newContent: string) => {
-      const response = await fetch("/api/files", {
+      const response = await fetch("/api/templates", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          file: "CLAUDE.md",
+          filename: decodedName,
           content: newContent,
         }),
       });
-      if (!response.ok) throw new Error("Failed to save file");
+      if (!response.ok) throw new Error("Failed to save template");
       return response.json();
     },
     onSuccess: () => {
-      toast.success("CLAUDE.md saved successfully");
+      toast.success("Template saved successfully");
       setHasChanges(false);
-      queryClient.invalidateQueries({ queryKey: ["claude-md"] });
+      queryClient.invalidateQueries({ queryKey: ["template", decodedName] });
+      queryClient.invalidateQueries({ queryKey: ["templates"] });
     },
     onError: (error) => {
       toast.error("Failed to save: " + error.message);
@@ -47,15 +64,15 @@ export default function ClaudeMdPage() {
   });
 
   useEffect(() => {
-    if (data?.content) {
-      setContent(data.content);
+    if (template?.content) {
+      setContent(template.content);
       setHasChanges(false);
     }
-  }, [data]);
+  }, [template]);
 
   const handleChange = (newContent: string) => {
     setContent(newContent);
-    setHasChanges(newContent !== data?.content);
+    setHasChanges(newContent !== template?.content);
   };
 
   const handleSave = () => {
@@ -73,14 +90,14 @@ export default function ClaudeMdPage() {
     );
   }
 
-  if (error) {
+  if (error || !template) {
     return (
       <MainLayout>
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
-            Failed to load CLAUDE.md. Make sure the file exists at ~/.claude/CLAUDE.md
+            Failed to load template: {decodedName}
           </AlertDescription>
         </Alert>
       </MainLayout>
@@ -90,11 +107,18 @@ export default function ClaudeMdPage() {
   return (
     <MainLayout>
       <div className="flex h-[calc(100vh-8rem)] flex-col">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold">CLAUDE.md</h1>
-          <p className="text-sm text-muted-foreground">
-            Global development rules and instructions for Claude Code
-          </p>
+        <div className="mb-4 flex items-center gap-4">
+          <Button variant="ghost" size="icon" asChild>
+            <Link href="/templates">
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+          </Button>
+          <div className="flex-1">
+            <h1 className="text-2xl font-bold">
+              {decodedName.replace(".md", "")}
+            </h1>
+            <p className="text-sm text-muted-foreground">{template.path}</p>
+          </div>
         </div>
         <div className="flex-1 overflow-hidden rounded-lg border">
           <MarkdownEditor

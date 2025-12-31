@@ -5,6 +5,8 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import {
   Dialog,
   DialogContent,
@@ -98,7 +100,18 @@ Add your rule content here.
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="filename">Filename</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="filename">Filename</Label>
+                <InfoTip
+                  content={
+                    <div>
+                      <p>{helpContent.creation.rule.name.description}</p>
+                      <p className="mt-1 text-xs">Example: {helpContent.creation.rule.name.example}</p>
+                    </div>
+                  }
+                  side="right"
+                />
+              </div>
               <Input
                 id="filename"
                 value={filename}

@@ -131,3 +131,135 @@ export async function PUT(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json(
+      { error: "Cannot create in demo mode" },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { name, description, model = "sonnet" } = body;
+
+    if (!name) {
+      return NextResponse.json(
+        { error: "Name is required" },
+        { status: 400 }
+      );
+    }
+
+    // Validate name format (lowercase, hyphens only)
+    if (!/^[a-z][a-z0-9-]*$/.test(name)) {
+      return NextResponse.json(
+        { error: "Name must be lowercase, start with a letter, and contain only letters, numbers, and hyphens" },
+        { status: 400 }
+      );
+    }
+
+    // Validate model
+    const validModels = ["sonnet", "opus", "haiku"];
+    if (!validModels.includes(model)) {
+      return NextResponse.json(
+        { error: `Model must be one of: ${validModels.join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    const agentDir = join(AGENTS_DIR, name);
+    const agentPath = join(agentDir, "AGENT.md");
+
+    // Check if agent already exists
+    try {
+      await fs.access(agentPath);
+      return NextResponse.json(
+        { error: "Agent already exists" },
+        { status: 409 }
+      );
+    } catch {
+      // Agent doesn't exist, proceed
+    }
+
+    // Create initial content
+    const displayName = name.split("-").map((w: string) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const content = `---
+name: ${name}
+model: ${model}
+description: ${description || ""}
+---
+
+# ${displayName} Agent
+
+${description || "Add your agent description here."}
+
+## Purpose
+
+Describe the specialized purpose of this agent.
+
+## Capabilities
+
+- List the specific capabilities this agent has
+- What tools or resources it can access
+- What types of tasks it excels at
+
+## Instructions
+
+Add detailed instructions for how this agent should behave and handle tasks.
+`;
+
+    // Create directory and file
+    await fs.mkdir(agentDir, { recursive: true });
+    await fs.writeFile(agentPath, content, "utf-8");
+
+    return NextResponse.json({ success: true, name });
+  } catch (error) {
+    console.error("Failed to create agent:", error);
+    return NextResponse.json(
+      { error: "Failed to create agent" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json(
+      { error: "Cannot delete in demo mode" },
+      { status: 403 }
+    );
+  }
+
+  try {
+    const body = await request.json();
+    const { name, confirmed } = body;
+
+    if (!name) {
+      return NextResponse.json(
+        { error: "Name is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!confirmed) {
+      return NextResponse.json(
+        { error: "Deletion must be confirmed" },
+        { status: 400 }
+      );
+    }
+
+    const agentDir = join(AGENTS_DIR, name);
+
+    // Delete entire agent directory
+    await fs.rm(agentDir, { recursive: true, force: true });
+
+    return NextResponse.json({ success: true, name });
+  } catch (error) {
+    console.error("Failed to delete agent:", error);
+    return NextResponse.json(
+      { error: "Failed to delete agent" },
+      { status: 500 }
+    );
+  }
+}

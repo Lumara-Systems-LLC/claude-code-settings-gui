@@ -18,6 +18,7 @@ import {
   FolderOpen,
   GitBranch,
   ChevronDown,
+  Server,
 } from "lucide-react";
 import { useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -36,6 +37,7 @@ const iconMap = {
   HardDrive,
   FolderOpen,
   GitBranch,
+  Server,
 };
 
 type IconName = keyof typeof iconMap;
@@ -79,6 +81,7 @@ const navItems: (NavItem | NavGroup)[] = [
   {
     title: "System",
     items: [
+      { title: "MCP Servers", href: "/mcp-servers", icon: "Server" },
       { title: "Storage", href: "/storage", icon: "HardDrive" },
       { title: "Projects", href: "/projects", icon: "FolderOpen" },
       { title: "Git", href: "/git", icon: "GitBranch" },

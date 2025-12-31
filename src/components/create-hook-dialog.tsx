@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import {
   Dialog,
   DialogContent,
@@ -103,7 +105,18 @@ echo "Running ${finalName}"
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="name">Filename</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="name">Filename</Label>
+                <InfoTip
+                  content={
+                    <div>
+                      <p>{helpContent.creation.hook.name.description}</p>
+                      <p className="mt-1 text-xs">Example: {helpContent.creation.hook.name.example}</p>
+                    </div>
+                  }
+                  side="right"
+                />
+              </div>
               <Input
                 id="name"
                 value={name}
@@ -115,7 +128,13 @@ echo "Running ${finalName}"
               />
             </div>
             <div className="grid gap-2">
-              <Label htmlFor="event">Event Type</Label>
+              <div className="flex items-center gap-1">
+                <Label htmlFor="event">Event Type</Label>
+                <InfoTip
+                  content={helpContent.creation.hook.event.description}
+                  side="right"
+                />
+              </div>
               <Select value={event} onValueChange={setEvent}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select event" />

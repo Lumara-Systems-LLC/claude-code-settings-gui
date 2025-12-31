@@ -16,6 +16,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 
 interface StatsCardProps {
   title: string;
@@ -23,14 +25,19 @@ interface StatsCardProps {
   description?: string;
   icon: React.ReactNode;
   href: string;
+  infoTip?: React.ReactNode;
+  tourStep?: string;
 }
 
-function StatsCard({ title, value, description, icon, href }: StatsCardProps) {
+function StatsCard({ title, value, description, icon, href, infoTip, tourStep }: StatsCardProps) {
   return (
-    <Link href={href}>
+    <Link href={href} data-tour-step={tourStep}>
       <Card className="transition-colors hover:bg-accent/50">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+          <div className="flex items-center gap-1">
+            <CardTitle className="text-sm font-medium">{title}</CardTitle>
+            {infoTip}
+          </div>
           {icon}
         </CardHeader>
         <CardContent>
@@ -76,13 +83,25 @@ export function Dashboard() {
         </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4" data-tour-step="stats">
         <StatsCard
           title="Rules"
           value={isLoading ? "..." : stats?.rules ?? 0}
           description="Development guidelines"
           icon={<Scale className="h-4 w-4 text-muted-foreground" />}
           href="/rules"
+          tourStep="rules"
+          infoTip={
+            <InfoTip
+              content={
+                <div>
+                  <p>{helpContent.dashboard.rules.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{helpContent.dashboard.rules.usage}</p>
+                </div>
+              }
+              side="bottom"
+            />
+          }
         />
         <StatsCard
           title="Skills"
@@ -90,6 +109,18 @@ export function Dashboard() {
           description="Workflow automations"
           icon={<Wand2 className="h-4 w-4 text-muted-foreground" />}
           href="/skills"
+          tourStep="skills"
+          infoTip={
+            <InfoTip
+              content={
+                <div>
+                  <p>{helpContent.dashboard.skills.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{helpContent.dashboard.skills.usage}</p>
+                </div>
+              }
+              side="bottom"
+            />
+          }
         />
         <StatsCard
           title="Agents"
@@ -97,6 +128,18 @@ export function Dashboard() {
           description="Specialized roles"
           icon={<Bot className="h-4 w-4 text-muted-foreground" />}
           href="/agents"
+          tourStep="agents"
+          infoTip={
+            <InfoTip
+              content={
+                <div>
+                  <p>{helpContent.dashboard.agents.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{helpContent.dashboard.agents.usage}</p>
+                </div>
+              }
+              side="bottom"
+            />
+          }
         />
         <StatsCard
           title="Hooks"
@@ -104,11 +147,23 @@ export function Dashboard() {
           description="Event handlers"
           icon={<Webhook className="h-4 w-4 text-muted-foreground" />}
           href="/hooks"
+          tourStep="hooks"
+          infoTip={
+            <InfoTip
+              content={
+                <div>
+                  <p>{helpContent.dashboard.hooks.description}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{helpContent.dashboard.hooks.usage}</p>
+                </div>
+              }
+              side="bottom"
+            />
+          }
         />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+        <Card data-tour-step="quick-actions">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -137,11 +192,15 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card data-tour-step="storage-overview">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <HardDrive className="h-5 w-5" />
               Storage Overview
+              <InfoTip
+                content={helpContent.dashboard.storage.description}
+                side="right"
+              />
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -176,7 +235,7 @@ export function Dashboard() {
         </Card>
       </div>
 
-      <Card>
+      <Card data-tour-step="config-files">
         <CardHeader>
           <CardTitle>Configuration Files</CardTitle>
         </CardHeader>

@@ -17,8 +17,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AlertCircle, HardDrive, Trash2, RefreshCw, Folder } from "lucide-react";
+import { AlertCircle, HardDrive, Trash2, RefreshCw, Folder, Download, Upload, Loader2, Archive } from "lucide-react";
 import { toast } from "sonner";
+import { InfoTip } from "@/components/ui/info-tip";
+import { helpContent } from "@/lib/help-content";
 import {
   PieChart,
   Pie,
@@ -52,6 +54,10 @@ export default function StoragePage() {
   const [cleanupMode, setCleanupMode] = useState<"normal" | "aggressive">(
     "normal"
   );
+  const [restoreDialogOpen, setRestoreDialogOpen] = useState(false);
+  const [restoreMode, setRestoreMode] = useState<"merge" | "replace">("merge");
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const { data: stats, isLoading, error } = useQuery({
     queryKey: ["storage"],
@@ -93,6 +99,68 @@ export default function StoragePage() {
       toast.error("Cleanup failed: " + error.message);
     },
   });
+
+  const handleBackup = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch("/api/backup");
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Backup failed");
+      }
+
+      // Get filename from Content-Disposition header
+      const disposition = response.headers.get("Content-Disposition");
+      const filename = disposition?.match(/filename="(.+)"/)?.[1] || "claude-backup.tar.gz";
+
+      // Download the file
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("Backup downloaded successfully");
+    } catch (error) {
+      toast.error(`Backup failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  const handleRestore = async (file: File) => {
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("mode", restoreMode);
+
+      const response = await fetch("/api/backup", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Restore failed");
+      }
+
+      const result = await response.json();
+      toast.success(`Restored ${result.restoredItems.length} items`);
+      setRestoreDialogOpen(false);
+
+      // Invalidate all queries to refresh data
+      queryClient.invalidateQueries();
+    } catch (error) {
+      toast.error(`Restore failed: ${error instanceof Error ? error.message : "Unknown error"}`);
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -160,13 +228,34 @@ export default function StoragePage() {
               Manage ~/.claude directory storage
             </p>
           </div>
-          <Button
-            variant="destructive"
-            onClick={() => setCleanupDialogOpen(true)}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            Run Cleanup
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={handleBackup}
+              disabled={isDownloading}
+            >
+              {isDownloading ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              Export Backup
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setRestoreDialogOpen(true)}
+            >
+              <Upload className="mr-2 h-4 w-4" />
+              Restore
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setCleanupDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Run Cleanup
+            </Button>
+          </div>
         </div>
 
         <div className="grid gap-4 md:grid-cols-4">
@@ -183,8 +272,12 @@ export default function StoragePage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium flex items-center gap-1">
                 Ephemeral Data
+                <InfoTip
+                  content={helpContent.storage.ephemeralData.description}
+                  side="bottom"
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -206,8 +299,12 @@ export default function StoragePage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">
+              <CardTitle className="text-sm font-medium flex items-center gap-1">
                 Cleanable Space
+                <InfoTip
+                  content={helpContent.storage.cleanableSpace.description}
+                  side="bottom"
+                />
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -355,38 +452,54 @@ export default function StoragePage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="flex gap-4">
-              <Button
-                variant={cleanupMode === "normal" ? "default" : "outline"}
-                onClick={() => setCleanupMode("normal")}
-                className="flex-1"
-              >
-                Normal (30 days)
-              </Button>
-              <Button
-                variant={cleanupMode === "aggressive" ? "default" : "outline"}
-                onClick={() => setCleanupMode("aggressive")}
-                className="flex-1"
-              >
-                Aggressive (7 days)
-              </Button>
+              <div className="flex-1 space-y-1">
+                <Button
+                  variant={cleanupMode === "normal" ? "default" : "outline"}
+                  onClick={() => setCleanupMode("normal")}
+                  className="w-full"
+                >
+                  Normal (30 days)
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {helpContent.storage.cleanupModes.normal.description}
+                </p>
+              </div>
+              <div className="flex-1 space-y-1">
+                <Button
+                  variant={cleanupMode === "aggressive" ? "default" : "outline"}
+                  onClick={() => setCleanupMode("aggressive")}
+                  className="w-full"
+                >
+                  Aggressive (7 days)
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  {helpContent.storage.cleanupModes.aggressive.description}
+                </p>
+              </div>
             </div>
           </div>
           <DialogFooter className="gap-2">
-            <Button
-              variant="outline"
-              onClick={() =>
-                cleanupMutation.mutate({
-                  dryRun: true,
-                  aggressive: cleanupMode === "aggressive",
-                })
-              }
-              disabled={cleanupMutation.isPending}
-            >
-              {cleanupMutation.isPending ? (
-                <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
-              ) : null}
-              Dry Run
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                onClick={() =>
+                  cleanupMutation.mutate({
+                    dryRun: true,
+                    aggressive: cleanupMode === "aggressive",
+                  })
+                }
+                disabled={cleanupMutation.isPending}
+              >
+                {cleanupMutation.isPending ? (
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                ) : null}
+                Dry Run
+              </Button>
+              <InfoTip
+                content={helpContent.storage.dryRun.description}
+                side="top"
+              />
+            </div>
             <Button
               variant="destructive"
               onClick={() =>
@@ -403,6 +516,85 @@ export default function StoragePage() {
                 <Trash2 className="mr-2 h-4 w-4" />
               )}
               Run Cleanup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Restore Dialog */}
+      <Dialog open={restoreDialogOpen} onOpenChange={setRestoreDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Archive className="h-5 w-5" />
+              Restore Configuration
+            </DialogTitle>
+            <DialogDescription>
+              Restore your Claude configuration from a backup file.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="flex gap-4">
+              <div className="flex-1 space-y-1">
+                <Button
+                  variant={restoreMode === "merge" ? "default" : "outline"}
+                  onClick={() => setRestoreMode("merge")}
+                  className="w-full"
+                >
+                  Merge
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Add new items, backup existing before overwrite
+                </p>
+              </div>
+              <div className="flex-1 space-y-1">
+                <Button
+                  variant={restoreMode === "replace" ? "default" : "outline"}
+                  onClick={() => setRestoreMode("replace")}
+                  className="w-full"
+                >
+                  Replace
+                </Button>
+                <p className="text-xs text-muted-foreground text-center">
+                  Full restore, backs up current config first
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border-2 border-dashed p-6 text-center">
+              <input
+                type="file"
+                id="backup-file"
+                accept=".tar.gz,.tgz"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleRestore(file);
+                }}
+              />
+              <label
+                htmlFor="backup-file"
+                className="cursor-pointer flex flex-col items-center gap-2"
+              >
+                {isUploading ? (
+                  <>
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">Restoring...</span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="h-8 w-8 text-muted-foreground" />
+                    <span className="text-sm text-muted-foreground">
+                      Click to select backup file (.tar.gz)
+                    </span>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRestoreDialogOpen(false)}>
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>
