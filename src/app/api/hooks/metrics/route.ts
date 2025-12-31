@@ -4,7 +4,7 @@ import { join } from "path";
 import { homedir } from "os";
 import type { HookMetric, HookMetricsSummary } from "@/types/hook";
 
-const METRICS_PATH = join(homedir(), ".claude", "hooks", "hook-metrics.jsonl");
+const METRICS_PATH = join(homedir(), ".claude", "hook-metrics.jsonl");
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
