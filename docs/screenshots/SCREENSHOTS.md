@@ -10,36 +10,36 @@ Capture these screenshots for the README. Use a clean browser window at 1280x800
 - **Dark mode preferred** for visual appeal
 
 ### 2. `skills-editor.png`
-- Navigate to `/skills`
+- Navigate to `/artifacts/skills`
 - Click into a skill like `commit` or `debug`
 - Show the split view with editor on left, preview on right
 
 ### 3. `settings-editor.png`
-- Navigate to `/settings-json`
+- Navigate to `/config/settings-json`
 - Show the Permissions tab with some allow/deny patterns
 - Make sure the tab bar is visible
 
 ### 4. `hook-metrics.png`
-- Navigate to `/hooks`
+- Navigate to `/insights/hooks`
 - Show the metrics dashboard with charts
 - Include the hook list with success/failure indicators
 
 ### 5. `storage.png`
-- Navigate to `/storage`
+- Navigate to `/data/storage`
 - Show the pie chart and directory breakdown
 - Include the cleanup panel
 
 ### 6. `git.png`
-- Navigate to `/git`
+- Navigate to `/integrations/git`
 - Have some modified files staged
 - Show the commit form
 
 ### 7. `rules.png`
-- Navigate to `/rules`
+- Navigate to `/artifacts/rules`
 - Show the list with core rules and path-specific rules separated
 
 ### 8. `agents.png`
-- Navigate to `/agents`
+- Navigate to `/artifacts/agents`
 - Show the agent cards with model badges
 
 ## Tips

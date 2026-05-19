@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { join } from "path";
-import { homedir } from "os";
 import { settingsSchema, formatValidationErrors } from "@/schemas/settings.schema";
 import { createBackup } from "@/lib/file-utils";
+import { PATHS } from "@/lib/constants";
 import { IS_DEMO_MODE, DEMO_SETTINGS } from "@/lib/demo-data";
 
-const SETTINGS_PATH = join(homedir(), ".claude", "settings.json");
+const SETTINGS_PATH = PATHS.SETTINGS_JSON;
 
 export async function GET() {
   if (IS_DEMO_MODE) {

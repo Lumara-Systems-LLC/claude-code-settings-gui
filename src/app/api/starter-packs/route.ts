@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join, dirname } from "path";
-import { homedir } from "os";
+import { CLAUDE_DIR } from "@/lib/constants";
 import { STARTER_PACKS, getStarterPack } from "@/lib/starter-packs";
 import { IS_DEMO_MODE } from "@/lib/demo-data";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 // GET - List available starter packs
 export async function GET() {

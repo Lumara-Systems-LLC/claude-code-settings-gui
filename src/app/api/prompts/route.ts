@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join, basename } from "path";
-import { homedir } from "os";
 import { createBackup, formatBytes } from "@/lib/file-utils";
+import { PATHS } from "@/lib/constants";
+import { IS_DEMO_MODE } from "@/lib/demo-data";
 
-const PROMPTS_DIR = join(homedir(), ".claude", "prompts");
+const PROMPTS_DIR = PATHS.PROMPTS_DIR;
 
 interface PromptListItem {
   name: string;
@@ -70,6 +71,9 @@ export async function GET(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json({ error: "Cannot save in demo mode" }, { status: 403 });
+  }
   try {
     const body = await request.json();
     const { filename, content } = body;
@@ -83,7 +87,6 @@ export async function PUT(request: NextRequest) {
 
     const filePath = join(PROMPTS_DIR, basename(filename));
 
-    // Create backup
     try {
       await fs.access(filePath);
       await createBackup(filePath);
@@ -91,7 +94,7 @@ export async function PUT(request: NextRequest) {
       // File doesn't exist, no backup needed
     }
 
-    // Write atomically
+    await fs.mkdir(PROMPTS_DIR, { recursive: true });
     const tempPath = `${filePath}.tmp.${Date.now()}`;
     await fs.writeFile(tempPath, content, "utf-8");
     await fs.rename(tempPath, filePath);
@@ -103,5 +106,57 @@ export async function PUT(request: NextRequest) {
       { error: "Failed to update prompt" },
       { status: 500 }
     );
+  }
+}
+
+export async function POST(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json({ error: "Cannot create in demo mode" }, { status: 403 });
+  }
+  try {
+    const { filename, content } = await request.json();
+    if (!filename || !content) {
+      return NextResponse.json(
+        { error: "Filename and content are required" },
+        { status: 400 }
+      );
+    }
+    const filePath = join(PROMPTS_DIR, basename(filename));
+    try {
+      await fs.access(filePath);
+      return NextResponse.json({ error: "Prompt already exists" }, { status: 409 });
+    } catch {
+      // doesn't exist
+    }
+    await fs.mkdir(PROMPTS_DIR, { recursive: true });
+    await fs.writeFile(filePath, content, "utf-8");
+    return NextResponse.json({ success: true, filename });
+  } catch (error) {
+    console.error("Failed to create prompt:", error);
+    return NextResponse.json({ error: "Failed to create prompt" }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: NextRequest) {
+  if (IS_DEMO_MODE) {
+    return NextResponse.json({ error: "Cannot delete in demo mode" }, { status: 403 });
+  }
+  try {
+    const { filename, confirmed } = await request.json();
+    if (!filename) {
+      return NextResponse.json({ error: "Filename is required" }, { status: 400 });
+    }
+    if (!confirmed) {
+      return NextResponse.json(
+        { error: "Deletion must be confirmed" },
+        { status: 400 }
+      );
+    }
+    const filePath = join(PROMPTS_DIR, basename(filename));
+    await fs.unlink(filePath);
+    return NextResponse.json({ success: true, filename });
+  } catch (error) {
+    console.error("Failed to delete prompt:", error);
+    return NextResponse.json({ error: "Failed to delete prompt" }, { status: 500 });
   }
 }

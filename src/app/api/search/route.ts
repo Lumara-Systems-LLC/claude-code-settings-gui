@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { join, basename } from "path";
-import { homedir } from "os";
+import { join } from "path";
+import { CLAUDE_DIR } from "@/lib/constants";
 import Fuse from "fuse.js";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 interface SearchableItem {
   type: "rule" | "skill" | "agent" | "template" | "prompt" | "hook";

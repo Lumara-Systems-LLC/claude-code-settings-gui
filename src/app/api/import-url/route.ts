@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { CLAUDE_DIR } from "@/lib/constants";
 import { IS_DEMO_MODE } from "@/lib/demo-data";
 
 const execAsync = promisify(exec);
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 // Supported import sources
 const GITHUB_RAW_PATTERN = /^https:\/\/raw\.githubusercontent\.com\/([^/]+)\/([^/]+)\/([^/]+)\/(.+)$/;

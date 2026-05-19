@@ -7,6 +7,8 @@ export const permissionPatternSchema = z
 export const permissionSchema = z.object({
   allow: z.array(permissionPatternSchema).default([]),
   deny: z.array(permissionPatternSchema).default([]),
+  ask: z.array(permissionPatternSchema).optional(),
+  additionalDirectories: z.array(z.string()).optional(),
 });
 
 export const mcpServerSchema = z.object({
@@ -36,29 +38,38 @@ export const hooksSchema = z
     UserPromptSubmit: z.array(hookMatcherSchema).optional(),
     PreToolUse: z.array(hookMatcherSchema).optional(),
     PostToolUse: z.array(hookMatcherSchema).optional(),
+    PreCompact: z.array(hookMatcherSchema).optional(),
+    PostToolUseFailure: z.array(hookMatcherSchema).optional(),
   })
   .catchall(z.array(hookMatcherSchema).optional());
 
+export const statusLineSchema = z.object({
+  type: z.enum(["command", "static"]).optional(),
+  command: z.string().optional(),
+  text: z.string().optional(),
+});
+
+export const attributionSchema = z.object({
+  commit: z.string().optional(),
+  pr: z.string().optional(),
+});
+
 export const settingsSchema = z
   .object({
+    model: z.string().optional(),
     permissions: permissionSchema.optional().default({ allow: [], deny: [] }),
     mcpServers: z.record(z.string(), mcpServerSchema).optional().default({}),
     alwaysThinkingEnabled: z.boolean().optional(),
+    enableAgentTeams: z.boolean().optional(),
+    enabledPlugins: z.record(z.string(), z.boolean()).optional(),
+    statusLine: statusLineSchema.optional(),
     hooks: hooksSchema.optional().default({}),
-    attribution: z
-      .object({
-        commit: z.string().optional(),
-        pr: z.string().optional(),
-      })
-      .optional(),
+    attribution: attributionSchema.optional(),
   })
   .catchall(z.unknown());
 
 export type SettingsSchema = z.infer<typeof settingsSchema>;
 
-/**
- * Format Zod validation errors into human-readable messages
- */
 export function formatValidationErrors(error: z.ZodError): string[] {
   return error.issues.map((issue) => {
     const path = issue.path.join(".");

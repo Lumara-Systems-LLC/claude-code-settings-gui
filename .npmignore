@@ -1,0 +1,49 @@
+# Belt-and-suspenders alongside package.json `files`. If `files` is set, npm
+# uses ONLY that whitelist — but in case anyone removes it, this defends
+# against accidentally shipping local data.
+
+.next/
+node_modules/
+coverage/
+out/
+build/
+
+# Tests
+tests/
+vitest.config.ts
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Dev configs
+eslint.config.mjs
+.dockerignore
+Dockerfile
+docker-compose.yml
+.github/
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.swo
+
+# Env / secrets
+.env*
+*.local
+
+# Personal docs
+docs/
+CONTRIBUTING.md
+
+# Backups + lockfiles
+*.backup.*
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+# Vercel
+vercel.json
+.vercel/

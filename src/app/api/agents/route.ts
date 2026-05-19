@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { parseMarkdown } from "@/lib/frontmatter";
 import { createBackup } from "@/lib/file-utils";
+import { PATHS } from "@/lib/constants";
 import type { AgentFrontmatter, AgentListItem, Agent } from "@/types/agent";
 import { IS_DEMO_MODE, DEMO_AGENTS } from "@/lib/demo-data";
 
-const AGENTS_DIR = join(homedir(), ".claude", "agents");
+const AGENTS_DIR = PATHS.AGENTS_DIR;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

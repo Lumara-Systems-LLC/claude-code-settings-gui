@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
 import { join } from "path";
-import { homedir } from "os";
 import { promises as fs } from "fs";
+import { PATHS } from "@/lib/constants";
 
 const execAsync = promisify(exec);
-const CLEANUP_SCRIPT = join(homedir(), ".claude", "scripts", "cleanup.sh");
+const CLEANUP_SCRIPT = join(PATHS.SCRIPTS_DIR, "cleanup.sh");
 
 export async function POST(request: NextRequest) {
   try {

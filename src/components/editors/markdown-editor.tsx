@@ -4,9 +4,9 @@ import { useCallback, useState } from "react";
 import Editor from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Save, Eye, Code } from "lucide-react";
-import ReactMarkdown from "react-markdown";
+import { MarkdownPreview } from "./markdown-preview";
 
 interface MarkdownEditorProps {
   value: string;
@@ -106,10 +106,8 @@ export function MarkdownEditor({
         )}
 
         {activeTab === "preview" && (
-          <div className="h-full overflow-auto p-6">
-            <article className="prose prose-sm dark:prose-invert max-w-none">
-              <ReactMarkdown>{value}</ReactMarkdown>
-            </article>
+          <div className="h-full overflow-auto">
+            <MarkdownPreview value={value} />
           </div>
         )}
 
@@ -133,10 +131,8 @@ export function MarkdownEditor({
                 }}
               />
             </div>
-            <div className="overflow-auto p-6">
-              <article className="prose prose-sm dark:prose-invert max-w-none">
-                <ReactMarkdown>{value}</ReactMarkdown>
-              </article>
+            <div className="overflow-auto">
+              <MarkdownPreview value={value} />
             </div>
           </div>
         )}

@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { createBackup, formatBytes } from "@/lib/file-utils";
+import { PATHS } from "@/lib/constants";
 import type { HookListItem, HookScript } from "@/types/hook";
 import { IS_DEMO_MODE, DEMO_HOOKS } from "@/lib/demo-data";
 
-const HOOKS_DIR = join(homedir(), ".claude", "hooks");
+const HOOKS_DIR = PATHS.HOOKS_DIR;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;
