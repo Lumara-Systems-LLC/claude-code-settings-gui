@@ -1,20 +1,34 @@
 import { promises as fs } from "fs";
-import { join, dirname } from "path";
-import { homedir } from "os";
+import { join, dirname, basename } from "path";
+import { CLAUDE_DIR } from "./constants";
+import { logAudit } from "./audit-log";
 
-const CLAUDE_DIR = join(homedir(), ".claude");
+// Filenames matching these patterns are treated as sensitive and only
+// served by /api/files when the caller presents a valid reveal token.
+const SENSITIVE_FILENAME_PATTERNS: readonly RegExp[] = [
+  /^\.env(\..+)?$/i,
+  /^\.credentials\.json$/i,
+  /\.key$/i,
+  /\.pem$/i,
+  /\.p12$/i,
+  /\.pfx$/i,
+  /(^|[._-])secrets?([._-]|$)/i,
+  /(^|[._-])tokens?([._-]|$)/i,
+  /(^|[._-])passwords?([._-]|$)/i,
+  /\.gpg$/i,
+  /\.asc$/i,
+];
 
-/**
- * Validates that a path is within the ~/.claude directory
- */
+export function isSensitive(path: string): boolean {
+  const name = basename(path);
+  return SENSITIVE_FILENAME_PATTERNS.some((re) => re.test(name));
+}
+
 export function validatePath(path: string): boolean {
   const normalizedPath = join(path);
   return normalizedPath.startsWith(CLAUDE_DIR);
 }
 
-/**
- * Creates a backup of a file before modifying it
- */
 export async function createBackup(path: string): Promise<string | null> {
   try {
     const content = await fs.readFile(path, "utf-8");
@@ -26,32 +40,24 @@ export async function createBackup(path: string): Promise<string | null> {
   }
 }
 
-/**
- * Reads a file and returns its content
- */
 export async function readFile(path: string): Promise<string> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
   return fs.readFile(path, "utf-8");
 }
 
-/**
- * Writes content to a file with optional backup
- */
 export async function writeFile(
   path: string,
   content: string,
   createBackupFirst = true
 ): Promise<void> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
 
-  // Ensure directory exists
   await fs.mkdir(dirname(path), { recursive: true });
 
-  // Create backup if requested and file exists
   if (createBackupFirst) {
     try {
       await fs.access(path);
@@ -61,31 +67,31 @@ export async function writeFile(
     }
   }
 
-  // Write atomically by writing to temp file first
   const tempPath = `${path}.tmp.${Date.now()}`;
   await fs.writeFile(tempPath, content, "utf-8");
   await fs.rename(tempPath, path);
+  // Audit the write (best-effort; doesn't fail the caller)
+  if (!path.endsWith(".gui-audit.jsonl") && !path.includes(".backup.")) {
+    await logAudit({ action: "write", path, size: content.length });
+  }
 }
 
-/**
- * Deletes a file
- */
 export async function deleteFile(path: string): Promise<void> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
   await fs.unlink(path);
+  if (!path.endsWith(".gui-audit.jsonl") && !path.includes(".backup.")) {
+    await logAudit({ action: "delete", path });
+  }
 }
 
-/**
- * Lists files in a directory
- */
 export async function listDirectory(
   path: string,
   options?: { recursive?: boolean; filter?: (name: string) => boolean }
 ): Promise<string[]> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
 
   const entries = await fs.readdir(path, { withFileTypes: true });
@@ -108,9 +114,6 @@ export async function listDirectory(
   return files;
 }
 
-/**
- * Gets file stats
- */
 export async function getFileStats(path: string): Promise<{
   size: number;
   sizeHuman: string;
@@ -118,7 +121,7 @@ export async function getFileStats(path: string): Promise<{
   isDirectory: boolean;
 }> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
 
   const stats = await fs.stat(path);
@@ -130,16 +133,13 @@ export async function getFileStats(path: string): Promise<{
   };
 }
 
-/**
- * Gets directory size recursively
- */
 export async function getDirectorySize(path: string): Promise<{
   sizeBytes: number;
   sizeHuman: string;
   itemCount: number;
 }> {
   if (!validatePath(path)) {
-    throw new Error("Path must be within ~/.claude directory");
+    throw new Error(`Path must be within ${CLAUDE_DIR} directory`);
   }
 
   let totalSize = 0;
@@ -171,9 +171,6 @@ export async function getDirectorySize(path: string): Promise<{
   };
 }
 
-/**
- * Formats bytes to human readable string
- */
 export function formatBytes(bytes: number): string {
   if (bytes === 0) return "0 B";
   const k = 1024;
@@ -182,13 +179,19 @@ export function formatBytes(bytes: number): string {
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
 }
 
-/**
- * Checks if a file exists
- */
 export async function fileExists(path: string): Promise<boolean> {
   try {
     await fs.access(path);
     return true;
+  } catch {
+    return false;
+  }
+}
+
+export async function dirExists(path: string): Promise<boolean> {
+  try {
+    const stats = await fs.stat(path);
+    return stats.isDirectory();
   } catch {
     return false;
   }

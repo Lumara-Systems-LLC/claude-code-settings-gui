@@ -1,0 +1,23 @@
+services:
+  gui:
+    build:
+      context: .
+      target: runner
+    image: claude-code-settings-gui:latest
+    container_name: claude-code-settings-gui
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      CLAUDE_CONFIG_DIR: /data/.claude
+      NODE_ENV: production
+    volumes:
+      # Mount your local ~/.claude into the container. Edit the host path
+      # (left of the colon) if your config lives elsewhere.
+      - ${CLAUDE_CONFIG_DIR:-~/.claude}:/data/.claude
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/stats"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s

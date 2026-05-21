@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
 interface FileWatchEvent {
@@ -28,6 +28,7 @@ export function FileWatcher() {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  const connectRef = useRef<() => void>(() => {});
 
   const connect = useCallback(() => {
     if (eventSourceRef.current) {
@@ -39,22 +40,17 @@ export function FileWatcher() {
 
     eventSource.onopen = () => {
       reconnectAttemptsRef.current = 0;
-      console.log("File watcher connected");
     };
 
     eventSource.onmessage = (event) => {
       try {
         const data: FileWatchEvent = JSON.parse(event.data);
 
-        // Handle file changes by invalidating queries
         if (data.type === "change" || data.type === "rename") {
           const queryKeys = data.category ? CATEGORY_QUERY_KEYS[data.category] : [];
-
           for (const key of queryKeys) {
             queryClient.invalidateQueries({ queryKey: [key] });
           }
-
-          // Also invalidate stats for any change
           queryClient.invalidateQueries({ queryKey: ["stats"] });
         }
       } catch (error) {
@@ -66,15 +62,20 @@ export function FileWatcher() {
       eventSource.close();
       eventSourceRef.current = null;
 
-      // Exponential backoff reconnect
       const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
       reconnectAttemptsRef.current++;
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        connect();
+        connectRef.current();
       }, delay);
     };
   }, [queryClient]);
+
+  // Keep the ref pointed at the latest connect closure so the SSE error
+  // handler can reconnect without self-referencing inside its own body.
+  useEffect(() => {
+    connectRef.current = connect;
+  }, [connect]);
 
   useEffect(() => {
     connect();
@@ -90,6 +91,5 @@ export function FileWatcher() {
     };
   }, [connect]);
 
-  // This component renders nothing
   return null;
 }

@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { join } from "path";
-import { homedir } from "os";
+import { CLAUDE_DIR } from "@/lib/constants";
 import type { GitStatus } from "@/types/storage";
 import { IS_DEMO_MODE, DEMO_GIT_STATUS } from "@/lib/demo-data";
 
 const execAsync = promisify(exec);
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 export async function GET() {
   if (IS_DEMO_MODE) {
@@ -28,7 +26,9 @@ export async function GET() {
       { cwd: CLAUDE_DIR }
     );
 
-    const lines = statusOutput.trim().split("\n").filter(Boolean);
+    // Don't .trim() the whole output — the first line's leading space is significant
+    // in git porcelain format (it's the staged-status column).
+    const lines = statusOutput.trimEnd().split("\n").filter(Boolean);
     const modified: string[] = [];
     const staged: string[] = [];
     const untracked: string[] = [];

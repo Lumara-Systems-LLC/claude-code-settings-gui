@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef, useMemo } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTour } from "./tour-provider";
 import { Button } from "@/components/ui/button";
@@ -232,6 +232,19 @@ export function TourOverlay() {
     setPopoverPosition({ top, left });
   }, [targetPosition, currentStepData]);
 
+  const handleNext = useCallback(() => {
+    if (currentStep === steps.length - 1) {
+      // Last step - show celebration
+      setShowCelebration(true);
+      setTimeout(() => {
+        setShowCelebration(false);
+        nextStep();
+      }, 1500);
+    } else {
+      nextStep();
+    }
+  }, [currentStep, steps.length, nextStep]);
+
   // Handle keyboard navigation
   useEffect(() => {
     if (!isActive) return;
@@ -253,20 +266,7 @@ export function TourOverlay() {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isActive, currentStep, steps.length, prevStep, skipTour]);
-
-  const handleNext = () => {
-    if (currentStep === steps.length - 1) {
-      // Last step - show celebration
-      setShowCelebration(true);
-      setTimeout(() => {
-        setShowCelebration(false);
-        nextStep();
-      }, 1500);
-    } else {
-      nextStep();
-    }
-  };
+  }, [isActive, prevStep, skipTour, handleNext]);
 
   if (!isActive || !currentStepData) return null;
 

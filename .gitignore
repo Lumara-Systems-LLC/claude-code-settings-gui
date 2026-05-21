@@ -39,3 +39,25 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# editor
+.vscode/
+.idea/
+*.swp
+*~
+
+# logs (catch-all)
+*.log
+
+# Claude Code project config
+# Commit:    .claude/CLAUDE.md, .claude/settings.json
+# Don't commit personal allowlists, memory, plans, cached state
+.claude/settings.local.json
+.claude/memory/
+.claude/plans/
+.claude/.cache/
+.claude/cache/
+.claude/projects/
+.claude/todos/
+.claude/shell-snapshots/
+.claude/session-env/

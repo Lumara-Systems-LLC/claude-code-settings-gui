@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { getDirectorySize } from "@/lib/file-utils";
+import { CLAUDE_DIR } from "@/lib/constants";
 import { IS_DEMO_MODE, DEMO_STATS } from "@/lib/demo-data";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 async function countItemsInDir(dirPath: string): Promise<number> {
   try {

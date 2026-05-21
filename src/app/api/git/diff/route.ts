@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exec } from "child_process";
 import { promisify } from "util";
-import { join } from "path";
-import { homedir } from "os";
+import { CLAUDE_DIR } from "@/lib/constants";
 import type { GitDiff } from "@/types/storage";
 
 const execAsync = promisify(exec);
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

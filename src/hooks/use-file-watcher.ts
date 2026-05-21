@@ -34,13 +34,13 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}) {
   const eventSourceRef = useRef<EventSource | null>(null);
   const reconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const reconnectAttemptsRef = useRef(0);
+  // Hold the latest `connect` so the SSE onerror handler can call it without
+  // creating a self-reference inside its own definition (lint friendly).
+  const connectRef = useRef<() => void>(() => {});
   const [isConnected, setIsConnected] = useState(false);
 
   const connect = useCallback(() => {
-    // Only run on client side
-    if (typeof window === "undefined") {
-      return;
-    }
+    if (typeof window === "undefined") return;
 
     if (eventSourceRef.current) {
       eventSourceRef.current.close();
@@ -57,19 +57,12 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}) {
     eventSource.onmessage = (event) => {
       try {
         const data: FileWatchEvent = JSON.parse(event.data);
-
-        // Call custom handler
         onEvent?.(data);
-
-        // Handle file changes by invalidating queries
         if (data.type === "change" || data.type === "rename") {
           const queryKeys = data.category ? CATEGORY_QUERY_KEYS[data.category] : [];
-
           for (const key of queryKeys) {
             queryClient.invalidateQueries({ queryKey: [key] });
           }
-
-          // Also invalidate stats for any change
           queryClient.invalidateQueries({ queryKey: ["stats"] });
         }
       } catch (error) {
@@ -82,32 +75,27 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}) {
       eventSourceRef.current = null;
       setIsConnected(false);
 
-      // Exponential backoff reconnect
+      // Exponential backoff reconnect via the ref so we don't self-reference
       const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
       reconnectAttemptsRef.current++;
 
       reconnectTimeoutRef.current = setTimeout(() => {
-        if (enabled) {
-          connect();
-        }
+        if (enabled) connectRef.current();
       }, delay);
     };
   }, [enabled, onEvent, queryClient]);
 
+  // Keep the ref pointed at the latest connect closure
   useEffect(() => {
-    // Only run on client side
-    if (typeof window === "undefined") {
-      return;
-    }
+    connectRef.current = connect;
+  }, [connect]);
 
-    if (enabled) {
-      connect();
-    }
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (enabled) connect();
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
+      if (reconnectTimeoutRef.current) clearTimeout(reconnectTimeoutRef.current);
       if (eventSourceRef.current) {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
@@ -115,7 +103,5 @@ export function useFileWatcher(options: UseFileWatcherOptions = {}) {
     };
   }, [enabled, connect]);
 
-  return {
-    isConnected,
-  };
+  return { isConnected };
 }

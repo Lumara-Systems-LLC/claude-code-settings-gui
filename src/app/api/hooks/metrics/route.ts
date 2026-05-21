@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { join } from "path";
-import { homedir } from "os";
+import { PATHS } from "@/lib/constants";
 import type { HookMetric, HookMetricsSummary } from "@/types/hook";
 
-const METRICS_PATH = join(homedir(), ".claude", "hook-metrics.jsonl");
+const METRICS_PATH = PATHS.HOOK_METRICS;
 
 export async function GET(request: NextRequest) {
   const searchParams = request.nextUrl.searchParams;

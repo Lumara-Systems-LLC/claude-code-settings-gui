@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join, basename } from "path";
-import { homedir } from "os";
 import { createBackup, formatBytes } from "@/lib/file-utils";
+import { CLAUDE_DIR, PATHS } from "@/lib/constants";
 import { BUILT_IN_TEMPLATES, TEMPLATE_CATEGORIES, searchTemplates, getTemplatesByCategory } from "@/lib/templates";
 import { IS_DEMO_MODE } from "@/lib/demo-data";
 
-const TEMPLATES_DIR = join(homedir(), ".claude", "templates");
+const TEMPLATES_DIR = PATHS.TEMPLATES_DIR;
 
 interface TemplateListItem {
   name: string;
@@ -157,7 +157,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const CLAUDE_DIR = join(homedir(), ".claude");
     let targetPath: string;
     let targetDir: string;
     const name = customName || template.filename || template.id;

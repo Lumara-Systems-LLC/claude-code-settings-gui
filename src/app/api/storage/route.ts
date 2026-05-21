@@ -1,12 +1,10 @@
 import { NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join } from "path";
-import { homedir } from "os";
 import { getDirectorySize, formatBytes } from "@/lib/file-utils";
+import { CLAUDE_DIR } from "@/lib/constants";
 import type { DirectorySize, StorageStats } from "@/types/storage";
 import { IS_DEMO_MODE, DEMO_STORAGE } from "@/lib/demo-data";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 // Directories that contain ephemeral data
 const EPHEMERAL_DIRS = [

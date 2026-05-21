@@ -1,8 +1,5 @@
 import { z } from "zod";
-import { homedir } from "os";
-import { join } from "path";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
+import { CLAUDE_DIR } from "@/lib/constants";
 
 export const filePathSchema = z.string().refine(
   (p) => p.startsWith(CLAUDE_DIR),

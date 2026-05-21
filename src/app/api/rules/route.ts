@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
 import { join, basename } from "path";
-import { homedir } from "os";
 import { parseMarkdown } from "@/lib/frontmatter";
 import { createBackup } from "@/lib/file-utils";
+import { PATHS } from "@/lib/constants";
 import type { RuleFrontmatter, RuleListItem, Rule } from "@/types/rule";
 import { IS_DEMO_MODE, DEMO_RULES } from "@/lib/demo-data";
 
-const RULES_DIR = join(homedir(), ".claude", "rules");
+const RULES_DIR = PATHS.RULES_DIR;
 
 // Path-specific rules that are triggered by file extensions
 const PATH_SPECIFIC_RULES = ["typescript.md", "go.md", "python.md", "react.md"];

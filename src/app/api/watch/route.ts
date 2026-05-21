@@ -1,10 +1,8 @@
 import { NextRequest } from "next/server";
 import { watch, FSWatcher } from "fs";
 import { join } from "path";
-import { homedir } from "os";
+import { CLAUDE_DIR } from "@/lib/constants";
 import { IS_DEMO_MODE } from "@/lib/demo-data";
-
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 // Track active watchers by connection
 const activeWatchers = new Map<string, FSWatcher[]>();

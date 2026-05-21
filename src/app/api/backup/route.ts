@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { promises as fs } from "fs";
-import { join, relative } from "path";
-import { homedir } from "os";
+import { join } from "path";
 import { exec } from "child_process";
 import { promisify } from "util";
+import { CLAUDE_DIR } from "@/lib/constants";
 import { IS_DEMO_MODE } from "@/lib/demo-data";
 
 const execAsync = promisify(exec);
-const CLAUDE_DIR = join(homedir(), ".claude");
 
 // Directories and files to include in backup
 const BACKUP_ITEMS = [
